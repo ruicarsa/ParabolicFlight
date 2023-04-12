@@ -1,0 +1,134 @@
+#include <Wire.h>
+#include <Adafruit_MMA8451.h>
+#include <Adafruit_Sensor.h>
+
+const byte  buttonPin1 = 3;    // the pin that the pushbutton is attached to
+const byte ledPin1 = 2;       // the pin that the LED is attached to
+const byte  buttonPin2 = 5;    // the pin that the pushbutton is attached to
+const byte ledPin2 = 4;       // the pin that the LED is attached to
+const byte  buttonPin3 = 7;    // the pin that the pushbutton is attached to
+const byte ledPin3 = 6;       // the pin that the LED is attached to
+
+Adafruit_MMA8451 mma = Adafruit_MMA8451();
+
+void setup()
+{
+   // initialize serial communication:
+   Serial.begin(9600);
+   
+   // initialize the button pin as a input with internal pullup enabled
+   pinMode(buttonPin1, INPUT_PULLUP);
+   // initialize the LED as an output:
+   pinMode(ledPin1, OUTPUT);
+   // initialize the button pin as a input with internal pullup enabled
+   pinMode(buttonPin2, INPUT_PULLUP);
+   // initialize the LED as an output:
+   pinMode(ledPin2, OUTPUT);
+   // initialize the button pin as a input with internal pullup enabled
+   pinMode(buttonPin3, INPUT_PULLUP);
+   // initialize the LED as an output:
+   pinMode(ledPin3, OUTPUT);
+
+  Serial.println("Adafruit MMA8451 test!");
+  
+  if (! mma.begin()) {
+    Serial.println("Couldnt start");
+    while (1);
+  }
+  Serial.println("MMA8451 found!");
+  
+  mma.setRange(MMA8451_RANGE_2_G);
+  
+  Serial.print("Range = "); Serial.print(2 << mma.getRange());  
+  Serial.println("G");
+  
+} //setup
+
+void loop()
+{
+  // Read the raw data in 14-bit counts
+  mma.read();  
+  /* Get a new sensor event */ 
+  sensors_event_t event; 
+  mma.getEvent(&event); 
+
+  float z = pow(event.acceleration.z, 2); 
+  float x = pow(event.acceleration.x, 2);
+  float u = sqrt(x + z);
+   
+  if ((u >= 0) && (u < 9.0)){ // Green light on
+     digitalWrite(ledPin1, LOW);
+     digitalWrite(ledPin2, HIGH);
+     digitalWrite(ledPin3, LOW);  
+    }
+    else{
+      digitalWrite(ledPin2, LOW);
+    }
+    
+  if ((9.0 < u) && (u < 9.9)){ // Blue light on
+     digitalWrite(ledPin1, LOW);
+     digitalWrite(ledPin2, LOW);
+     digitalWrite(ledPin3, HIGH);
+    }
+    else{
+      digitalWrite(ledPin3, LOW);
+    }  
+  
+  if (u > 9.9){ // Red light on
+     digitalWrite(ledPin1, HIGH);
+     //delay(500);
+     digitalWrite(ledPin2, LOW);
+     digitalWrite(ledPin3, LOW);
+   }
+    else{
+      digitalWrite(ledPin1, LOW);
+    }
+
+  // Read & display the 'raw' data in 14-bit counts
+  mma.read();
+  Serial.print("X:\t"); Serial.print(mma.x); 
+  Serial.print("\tY:\t"); Serial.print(mma.y); 
+  Serial.print("\tZ:\t"); Serial.print(mma.z); 
+  Serial.println();
+
+  /* Display the results (acceleration is measured in m/s^2) */
+  Serial.print("X: \t"); Serial.print(event.acceleration.x); Serial.print("\t");
+  Serial.print("Y: \t"); Serial.print(event.acceleration.y); Serial.print("\t");
+  Serial.print("Z: \t"); Serial.print(event.acceleration.z); Serial.print("\t");
+  Serial.println("m/s^2 ");
+
+  /* Get the orientation of the sensor */
+  uint8_t o = mma.getOrientation();
+  
+  switch (o) {
+    case MMA8451_PL_PUF: 
+      Serial.println("Portrait Up Front");
+      break;
+    case MMA8451_PL_PUB: 
+      Serial.println("Portrait Up Back");
+      break;    
+    case MMA8451_PL_PDF: 
+      Serial.println("Portrait Down Front");
+      break;
+    case MMA8451_PL_PDB: 
+      Serial.println("Portrait Down Back");
+      break;
+    case MMA8451_PL_LRF: 
+      Serial.println("Landscape Right Front");
+      break;
+    case MMA8451_PL_LRB: 
+      Serial.println("Landscape Right Back");
+      break;
+    case MMA8451_PL_LLF: 
+      Serial.println("Landscape Left Front");
+      break;
+    case MMA8451_PL_LLB: 
+      Serial.println("Landscape Left Back");
+      break;
+    }
+  Serial.print("Resultant = ");
+  Serial.println(u);
+  Serial.println();
+  //delay(500);
+  
+} // loop
